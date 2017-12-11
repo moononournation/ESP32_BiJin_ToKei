@@ -284,6 +284,7 @@ static void http_get_task()
 			ESP_LOGI(tag, "File written: %d", file_size);
 			close(s);
 			ESP_LOGI(tag, "freemem=%d", esp_get_free_heap_size()); // show free heap for debug only
+			vTaskDelay(4000 / portTICK_PERIOD_MS); // wait spiffs cache write finish
 
 			// clear screen and show current, in case cannot display the jpg
 			TFT_fillRect(0, 0, _width, _height, TFT_BLACK);
@@ -353,8 +354,6 @@ void app_main()
 {
 	// ========  PREPARE DISPLAY INITIALIZATION  =========
 
-	esp_err_t ret;
-
 	// === SET GLOBAL VARIABLES ==========================
 
 	// ===================================================
@@ -402,7 +401,7 @@ void app_main()
 	spi_lobo_device_interface_config_t devcfg = {
 			.clock_speed_hz = 8000000,				 // Initial clock out at 8 MHz
 			.mode = 0,												 // SPI mode 0
-			.spics_io_num = PIN_NUM_CS, 			 // set SPI CS pin
+			.spics_io_num = PIN_NUM_CS,				 // set SPI CS pin
 			.flags = LB_SPI_DEVICE_HALFDUPLEX, // ALWAYS SET  to HALF DUPLEX MODE!! for display spi
 	};
 
@@ -416,16 +415,13 @@ void app_main()
 	// ==================================================================
 	// ==== Initialize the SPI bus and attach the LCD to the SPI bus ====
 
-	ret = spi_lobo_bus_add_device(SPI_BUS, &buscfg, &devcfg, &spi);
-	assert(ret == ESP_OK);
+	ESP_ERROR_CHECK(spi_lobo_bus_add_device(SPI_BUS, &buscfg, &devcfg, &spi));
 	printf("SPI: display device added to spi bus (%d)\r\n", SPI_BUS);
 	disp_spi = spi;
 
 	// ==== Test select/deselect ====
-	ret = spi_lobo_device_select(spi, 1);
-	assert(ret == ESP_OK);
-	ret = spi_lobo_device_deselect(spi);
-	assert(ret == ESP_OK);
+	ESP_ERROR_CHECK(spi_lobo_device_select(spi, 1));
+	ESP_ERROR_CHECK(spi_lobo_device_deselect(spi));
 
 	printf("SPI: attached display device, speed=%u\r\n", spi_lobo_get_speed(spi));
 	printf("SPI: bus uses native pins: %s\r\n", spi_lobo_uses_native_pins(spi) ? "true" : "false");
@@ -492,11 +488,11 @@ void app_main()
 
 	// Use settings defined above to initialize and mount SPIFFS filesystem.
 	// Note: esp_vfs_spiffs_register is an all-in-one convenience function.
-	ret = esp_vfs_spiffs_register(&conf);
+	ESP_ERROR_CHECK(esp_vfs_spiffs_register(&conf));
 
 	vTaskDelay(2000 / portTICK_RATE_MS);
 
-	_fg = TFT_PURPLE;
+	_fg = TFT_MAGENTA;
 	TFT_print("Start HTTP GET TASK", MARGIN_X, LASTY + TFT_getfontheight() + 2);
 
 	xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);

@@ -32,5 +32,4 @@ local/
 *.elf
 *.map
 **/.DS_Store
-mkspiffs/
-settings.json
+.vscode/
