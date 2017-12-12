@@ -61,8 +61,8 @@
 
 // ==========================================================
 // rotate cache files to avoid always write to same block
-// assume each jpg not over 600k, 3M SPIFFS can fit 5 cache
-#define CACHE_COUNT 5
+// assume each jpg around 300k, 1M SPIFFS can fit 3 cache
+#define CACHE_COUNT 3
 // ==========================================================
 
 static struct tm *tm_info; // time data
@@ -284,7 +284,7 @@ static void http_get_task()
 			ESP_LOGI(tag, "File written: %d", file_size);
 			close(s);
 			ESP_LOGI(tag, "freemem=%d", esp_get_free_heap_size()); // show free heap for debug only
-			vTaskDelay(4000 / portTICK_PERIOD_MS); // wait spiffs cache write finish
+			vTaskDelay(1000 / portTICK_PERIOD_MS); // wait spiffs cache write finish
 
 			// clear screen and show current, in case cannot display the jpg
 			TFT_fillRect(0, 0, _width, _height, TFT_BLACK);
