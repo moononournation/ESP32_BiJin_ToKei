@@ -51,7 +51,7 @@
 
 #define SPIFFS_BASE_PATH "/spiffs"
 #define TIMEZONE 8 // hour offset
-#define TIMEADJ 30 // seconds advanced real time for prefetch and load image
+#define TIMEADJ 20 // seconds advanced real time for prefetch and load image
 
 #define MARGIN_X 10
 #define MARGIN_Y 10
@@ -91,7 +91,7 @@ const int CONNECTED_BIT = 0x00000001;
 static const char *REQUEST_FORMAT =
 		// "GET http://" WEB_SERVER "/assets/toppict/jp/t1/%.2d%.2d.jpg HTTP/1.0\r\n"
 		// "GET http://" WEB_SERVER "/assets/pict/jp/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
-		"GET http://" WEB_SERVER "/assets/pict/nagoya/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
+		"GET http://" WEB_SERVER "/assets/pict/kagawa/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
 		"Host: " WEB_SERVER "\r\n"
 		"User-Agent: esp-idf/1.0 esp32\r\n"
 		"\r\n";
