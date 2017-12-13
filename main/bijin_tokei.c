@@ -62,7 +62,7 @@
 // ==========================================================
 // rotate cache files to avoid always write to same block
 // assume each jpg around 300k, 1M SPIFFS can fit 3 cache
-#define CACHE_COUNT 3
+#define CACHE_COUNT 2
 // ==========================================================
 
 static struct tm *tm_info; // time data
@@ -91,7 +91,7 @@ const int CONNECTED_BIT = 0x00000001;
 static const char *REQUEST_FORMAT =
 		// "GET http://" WEB_SERVER "/assets/toppict/jp/t1/%.2d%.2d.jpg HTTP/1.0\r\n"
 		// "GET http://" WEB_SERVER "/assets/pict/jp/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
-		"GET http://" WEB_SERVER "/assets/pict/kagawa/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
+		"GET http://" WEB_SERVER "/assets/pict/hiroshima/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
 		"Host: " WEB_SERVER "\r\n"
 		"User-Agent: esp-idf/1.0 esp32\r\n"
 		"\r\n";
@@ -489,6 +489,8 @@ void app_main()
 	// Use settings defined above to initialize and mount SPIFFS filesystem.
 	// Note: esp_vfs_spiffs_register is an all-in-one convenience function.
 	ESP_ERROR_CHECK(esp_vfs_spiffs_register(&conf));
+
+	ESP_ERROR_CHECK(esp_spiffs_format(NULL));
 
 	vTaskDelay(2000 / portTICK_RATE_MS);
 
