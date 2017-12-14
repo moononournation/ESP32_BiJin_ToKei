@@ -1,4 +1,4 @@
-menu "TFT Display DEMO Configuration"
+menu "BiJin ToKei Configuration"
 
 config EXAMPLE_DISPLAY_TYPE
     int
