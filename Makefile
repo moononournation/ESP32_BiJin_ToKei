@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := tft_demo
+PROJECT_NAME := esp32_bijin_tokei
 
 EXTRA_CFLAGS += --save-temps
 
