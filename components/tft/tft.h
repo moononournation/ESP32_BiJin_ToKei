@@ -611,6 +611,7 @@ color_t HSBtoRGB(float _hue, float _sat, float _brightness);
  *       x: image left position; constants CENTER & RIGHT can be used; negative value is accepted
  *       y: image top position;  constants CENTER & BOTTOM can be used; negative value is accepted
  *   scale: image scale factor: 0~3; if scale>0, image is scaled by factor 1/(2^scale) (1/2, 1/4 or 1/8)
+ *  socket: socket for the HTTP response from which the image will be read
  *   fname: pointer to the name of the file from which the image will be read
  *   		if set to NULL, image will be read from memory buffer pointed to by 'buf'
  *     buf: pointer to the memory buffer from which the image will be read; used if fname=NULL
@@ -618,7 +619,7 @@ color_t HSBtoRGB(float _hue, float _sat, float _brightness);
  *
  */
 //-----------------------------------------------------------------------------------
-void TFT_jpg_image(int x, int y, uint8_t scale, char *fname, uint8_t *buf, int size);
+void TFT_jpg_image(int x, int y, uint8_t scale, int s, char *fname, uint8_t *buf, int size);
 
 /*
  * Decodes and displays BMP image

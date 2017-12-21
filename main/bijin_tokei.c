@@ -62,15 +62,19 @@
 // ==========================================================
 // rotate cache files to avoid always write to same block
 // assume each jpg around 300k, 1M SPIFFS can fit 3 cache
-#define CACHE_COUNT 2
+// set to 0 means not use cache file, direct decode HTTP JPG
+// response on the fly. This can avoid worn out the flash but
+// trade off a little bit display speed
+#define CACHE_COUNT 0
 // ==========================================================
 
 static struct tm *tm_info; // time data
 static char tmp_buf[64];	 // buffer for formating TFT display string
 static time_t time_now;
 static int last_show_minute = -1; // for checking if current minute picture already downloaded and shown
+#if CACHE_COUNT > 0
 static int cache_i = 1;
-
+#endif
 //==================================================================================
 static const char tag[] = "[BiJin ToKei]";
 
@@ -91,7 +95,8 @@ const int CONNECTED_BIT = 0x00000001;
 static const char *REQUEST_FORMAT =
 		// "GET http://" WEB_SERVER "/assets/toppict/jp/t1/%.2d%.2d.jpg HTTP/1.0\r\n"
 		// "GET http://" WEB_SERVER "/assets/pict/jp/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
-		"GET http://" WEB_SERVER "/assets/pict/hiroshima/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
+		// "GET http://" WEB_SERVER "/assets/pict/hiroshima/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
+		"GET http://" WEB_SERVER "/assets/pict/kids-fo/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
 		"Host: " WEB_SERVER "\r\n"
 		"User-Agent: esp-idf/1.0 esp32\r\n"
 		"\r\n";
@@ -161,8 +166,7 @@ static void http_get_task()
 	};
 	struct addrinfo *res;
 	struct in_addr *addr;
-	int s, r;
-	char recv_buf[512]; // assume response header must smaller than buffer size
+	int s;
 
 	while (1) // loop forever
 	{
@@ -239,6 +243,9 @@ static void http_get_task()
 			}
 			ESP_LOGI(tag, "... set socket receiving timeout success");
 
+			/* Read HTTP response */
+#if CACHE_COUNT > 0
+			int r;
 			char filename_buf[20];
 			sprintf(filename_buf, SPIFFS_BASE_PATH "/cache%d.jpg", cache_i++);
 			ESP_LOGI(tag, "... cache file: %s", filename_buf);
@@ -247,14 +254,13 @@ static void http_get_task()
 				cache_i = 1;
 			}
 
+			char recv_buf[512]; // assume response header must smaller than buffer size
 			FILE *f = fopen(filename_buf, "w");
 			if (f == NULL)
 			{
 				ESP_LOGE(tag, "Failed to open file for writing");
 				return;
 			}
-
-			/* Read HTTP response */
 			r = read(s, recv_buf, sizeof(recv_buf));
 			int offset = -1;
 			for (int i = 0; i < r; i++)
@@ -285,6 +291,7 @@ static void http_get_task()
 			close(s);
 			ESP_LOGI(tag, "freemem=%d", esp_get_free_heap_size()); // show free heap for debug only
 			vTaskDelay(1000 / portTICK_PERIOD_MS); // wait spiffs cache write finish
+#endif
 
 			// clear screen and show current, in case cannot display the jpg
 			TFT_fillRect(0, 0, _width, _height, TFT_BLACK);
@@ -292,7 +299,11 @@ static void http_get_task()
 			TFT_print(tmp_buf, MARGIN_X, CENTER);
 
 			// display image in 1/2 size
-			TFT_jpg_image(CENTER, CENTER, 1, filename_buf, NULL, 0);
+#if CACHE_COUNT > 0
+			TFT_jpg_image(CENTER, CENTER, 1, -1, filename_buf, NULL, 0);
+#else
+			TFT_jpg_image(CENTER, CENTER, 1, s, NULL, NULL, 0);
+#endif
 
 			last_show_minute = curr_minute;
 		}
@@ -476,6 +487,8 @@ void app_main()
 	vTaskDelay(2000 / portTICK_RATE_MS);
 
 	_fg = TFT_BLUE;
+
+#if CACHE_COUNT > 0
 	TFT_print("Initializing SPIFFS", MARGIN_X, LASTY + TFT_getfontheight() + 2);
 	// ==== Initialize the file system ====
 	printf("\r\n\n");
@@ -490,11 +503,14 @@ void app_main()
 	// Note: esp_vfs_spiffs_register is an all-in-one convenience function.
 	ESP_ERROR_CHECK(esp_vfs_spiffs_register(&conf));
 
+  // always format once to avoid error, trade off some time and flash worn out
 	ESP_ERROR_CHECK(esp_spiffs_format(NULL));
 
 	vTaskDelay(2000 / portTICK_RATE_MS);
 
 	_fg = TFT_MAGENTA;
+#endif
+
 	TFT_print("Start HTTP GET TASK", MARGIN_X, LASTY + TFT_getfontheight() + 2);
 
 	xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
