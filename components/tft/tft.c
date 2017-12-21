@@ -2646,11 +2646,11 @@ static UINT tjd_s_input(
 	while (!dev->found_header)
 	{
 		rb += read(dev->s, recv_buf, 1);
-		// putchar(recv_buf[0]); // debug
+		putchar(recv_buf[0]); // debug
 		if (recv_buf[0] == '\r')
 		{
 			rb += read(dev->s, recv_buf, 3);
-			// putchar(recv_buf[0]); putchar(recv_buf[1]); putchar(recv_buf[2]); // debug
+			putchar(recv_buf[0]); putchar(recv_buf[1]); putchar(recv_buf[2]); // debug
 			if ((recv_buf[0] == '\n') && (recv_buf[1] == '\r') && (recv_buf[2] == '\n'))
 			{
 				ESP_LOGI("TFT", "Found header ended at %d", rb);
