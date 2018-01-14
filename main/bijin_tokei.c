@@ -23,6 +23,7 @@
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
+#include "driver/rtc_io.h"
 #include "esp_system.h"
 #include "esp_heap_caps.h"
 #include "tftspi.h"
@@ -53,11 +54,13 @@
 #define TIMEZONE 8 // hour offset
 #define TIMEADJ 20 // seconds advanced real time for prefetch and load image
 
-#define MARGIN_X 10
-#define MARGIN_Y 10
+#define MARGIN_X 12
+#define MARGIN_Y 12
 
 #define NTP_WAIT 20 // seconds to wait NTP return
 #define NTP_RETRY 3
+
+#define WAKE_PIN 12
 
 // ==========================================================
 // rotate cache files to avoid always write to same block
@@ -91,7 +94,7 @@ const int CONNECTED_BIT = 0x00000001;
 // this is one of the famous site, you may search
 // more on the web.
 #define WEB_SERVER "www.bijint.com"
-#define WEB_PORT 80
+#define WEB_PORT "80"
 static const char *REQUEST_FORMAT =
 		// "GET http://" WEB_SERVER "/assets/toppict/jp/t1/%.2d%.2d.jpg HTTP/1.0\r\n"
 		// "GET http://" WEB_SERVER "/assets/pict/jp/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
@@ -190,7 +193,7 @@ static void http_get_task()
 													false, true, portMAX_DELAY);
 			ESP_LOGI(tag, "Connected to AP");
 
-			int err = getaddrinfo(WEB_SERVER, "80", &hints, &res);
+			int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
 
 			if (err != 0 || res == NULL)
 			{
@@ -295,7 +298,14 @@ static void http_get_task()
 
 			// clear screen and show current, in case cannot display the jpg
 			TFT_fillRect(0, 0, _width, _height, TFT_BLACK);
-			sprintf(tmp_buf, "%d-%.2d-%.2d %.2d:%.2d:%.2d", (tm_info->tm_year + 1900), (tm_info->tm_mon + 1), tm_info->tm_mday, tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec);
+			_fg = TFT_ORANGE;
+			TFT_setFont(FONT_7SEG, NULL);
+			set_7seg_font_atrib(10, 3, 1, TFT_ORANGE);
+			sprintf(tmp_buf, "%d-%.2d-%.2d", (tm_info->tm_year + 1900), (tm_info->tm_mon + 1), tm_info->tm_mday);
+			TFT_print(tmp_buf, MARGIN_X, MARGIN_Y);
+			_fg = TFT_CYAN;
+			set_7seg_font_atrib(30, 6, 1, TFT_CYAN);
+			sprintf(tmp_buf, "%.2d:%.2d", tm_info->tm_hour, tm_info->tm_min);
 			TFT_print(tmp_buf, MARGIN_X, CENTER);
 
 			// display image in 1/2 size
@@ -303,6 +313,7 @@ static void http_get_task()
 			TFT_jpg_image(CENTER, CENTER, 1, -1, filename_buf, NULL, 0);
 #else
 			TFT_jpg_image(CENTER, CENTER, 1, s, NULL, NULL, 0);
+			close(s);
 #endif
 
 			last_show_minute = curr_minute;
