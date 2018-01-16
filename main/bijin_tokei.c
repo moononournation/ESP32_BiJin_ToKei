@@ -46,13 +46,28 @@
 #include "nvs_flash.h"
 
 // ==========================================================
+// rotate cache files to avoid always write to same block
+// assume each jpg around 300k, 1M SPIFFS can fit 3 cache
+// set to 0 means not use cache file, direct decode HTTP JPG
+// response on the fly. This can avoid worn out the flash but
+// trade off a little bit display speed
+#define CACHE_COUNT 0
+// ==========================================================
+
+// ==========================================================
 // Define which spi bus to use TFT_VSPI_HOST or TFT_HSPI_HOST
 #define SPI_BUS TFT_VSPI_HOST
 // ==========================================================
 
 #define SPIFFS_BASE_PATH "/spiffs"
 #define TIMEZONE 8 // hour offset
+#define CHECK_NTP_INTERVAL 60 * 60 // 1 hour
+
+#if CACHE_COUNT > 0
 #define TIMEADJ 20 // seconds advanced real time for prefetch and load image
+#else
+#define TIMEADJ 2 // seconds advanced real time for load image on the fly
+#endif
 
 #define MARGIN_X 12
 #define MARGIN_Y 12
@@ -61,15 +76,6 @@
 #define NTP_RETRY 3
 
 #define WAKE_PIN 12
-
-// ==========================================================
-// rotate cache files to avoid always write to same block
-// assume each jpg around 300k, 1M SPIFFS can fit 3 cache
-// set to 0 means not use cache file, direct decode HTTP JPG
-// response on the fly. This can avoid worn out the flash but
-// trade off a little bit display speed
-#define CACHE_COUNT 0
-// ==========================================================
 
 static struct tm *tm_info; // time data
 static char tmp_buf[64];	 // buffer for formating TFT display string
@@ -110,6 +116,11 @@ static void refresh_tm_info()
 	time(&time_now);
 	time_now += (TIMEZONE * 60 * 60) + TIMEADJ;
 	tm_info = gmtime(&time_now);
+
+	if ((time_now % CHECK_NTP_INTERVAL) == 0)
+	{
+		sntp_init();
+	}
 }
 
 //------------------------------------------------------------
@@ -293,20 +304,20 @@ static void http_get_task()
 			ESP_LOGI(tag, "File written: %d", file_size);
 			close(s);
 			ESP_LOGI(tag, "freemem=%d", esp_get_free_heap_size()); // show free heap for debug only
-			vTaskDelay(1000 / portTICK_PERIOD_MS); // wait spiffs cache write finish
+			vTaskDelay(1000 / portTICK_PERIOD_MS);								 // wait spiffs cache write finish
 #endif
 
 			// clear screen and show current, in case cannot display the jpg
 			TFT_fillRect(0, 0, _width, _height, TFT_BLACK);
-			_fg = TFT_ORANGE;
 			TFT_setFont(FONT_7SEG, NULL);
-			set_7seg_font_atrib(10, 3, 1, TFT_ORANGE);
-			sprintf(tmp_buf, "%d-%.2d-%.2d", (tm_info->tm_year + 1900), (tm_info->tm_mon + 1), tm_info->tm_mday);
-			TFT_print(tmp_buf, MARGIN_X, MARGIN_Y);
-			_fg = TFT_CYAN;
-			set_7seg_font_atrib(30, 6, 1, TFT_CYAN);
+			_fg = TFT_GREEN;
+			set_7seg_font_atrib(24, 6, 1, TFT_GREEN);
 			sprintf(tmp_buf, "%.2d:%.2d", tm_info->tm_hour, tm_info->tm_min);
-			TFT_print(tmp_buf, MARGIN_X, CENTER);
+			TFT_print(tmp_buf, CENTER, CENTER);
+			_fg = TFT_CYAN;
+			set_7seg_font_atrib(8, 2, 1, TFT_CYAN);
+			sprintf(tmp_buf, "%d-%.2d-%.2d", (tm_info->tm_year + 1900), (tm_info->tm_mon + 1), tm_info->tm_mday);
+			TFT_print(tmp_buf, CENTER, _height - MARGIN_Y - TFT_getfontheight());
 
 			// display image in 1/2 size
 #if CACHE_COUNT > 0
@@ -514,7 +525,7 @@ void app_main()
 	// Note: esp_vfs_spiffs_register is an all-in-one convenience function.
 	ESP_ERROR_CHECK(esp_vfs_spiffs_register(&conf));
 
-  // always format once to avoid error, trade off some time and flash worn out
+	// always format once to avoid error, trade off some time and flash worn out
 	ESP_ERROR_CHECK(esp_spiffs_format(NULL));
 
 	vTaskDelay(2000 / portTICK_RATE_MS);
