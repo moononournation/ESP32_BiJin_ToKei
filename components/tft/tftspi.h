@@ -48,6 +48,8 @@
 #define DEFAULT_SPI_CLOCK           26000000
 #define TFT_INVERT_ROTATION         0
 #define TFT_INVERT_ROTATION1        1
+#define TFT_INVERT_ROTATION2        0   // Adapte M5Stack TFT
+#define TFT_INVERT_COLOR            0
 #define TFT_RGB_BGR                 0x00
 
 #define USE_TOUCH	TOUCH_TYPE_NONE
@@ -77,6 +79,8 @@
 #define DEFAULT_SPI_CLOCK           26000000
 #define TFT_INVERT_ROTATION         0
 #define TFT_INVERT_ROTATION1        0
+#define TFT_INVERT_ROTATION2        0   // Adapte M5Stack TFT
+#define TFT_INVERT_COLOR            0
 #define TFT_RGB_BGR                 0x08
 
 #define USE_TOUCH                   TOUCH_TYPE_STMPE610
@@ -94,6 +98,37 @@
 #define PIN_BCKL_OFF 1  	// GPIO value for backlight OFF
 // ---------------------------------------------------------
 
+#elif CONFIG_EXAMPLE_DISPLAY_TYPE == 3
+
+// ** Set the correct configuration for M5Stack TFT
+// ---------------------------------------------------------
+#define DEFAULT_DISP_TYPE   DISP_TYPE_ILI9341
+#define DEFAULT_TFT_DISPLAY_WIDTH   320
+#define DEFAULT_TFT_DISPLAY_HEIGHT  240
+#define DISP_COLOR_BITS_24          0x66
+#define DEFAULT_GAMMA_CURVE         0
+#define DEFAULT_SPI_CLOCK           26000000
+#define TFT_INVERT_ROTATION         0
+#define TFT_INVERT_ROTATION1        0
+#define TFT_INVERT_ROTATION2        1   // Adapte M5Stack TFT
+#define TFT_INVERT_COLOR            0
+#define TFT_RGB_BGR                 0x08
+
+#define USE_TOUCH                   TOUCH_TYPE_NONE
+
+#define PIN_NUM_MISO 19		// SPI MISO
+#define PIN_NUM_MOSI 23		// SPI MOSI
+#define PIN_NUM_CLK  18		// SPI CLOCK pin
+#define PIN_NUM_CS   14		// Display CS pin
+#define PIN_NUM_DC   27		// Display command/data pin
+#define PIN_NUM_TCS  0		// Touch screen CS pin (NOT used if USE_TOUCH=0)
+
+#define PIN_NUM_RST  33  	// GPIO used for RESET control (#16)
+#define PIN_NUM_BCKL 32  	// GPIO used for backlight control
+#define PIN_BCKL_ON  1  	// GPIO value for backlight ON
+#define PIN_BCKL_OFF 0  	// GPIO value for backlight OFF
+// ---------------------------------------------------------
+
 #else
 
 // Configuration for other boards, set the correct values for the display used
@@ -107,6 +142,13 @@
 // #############################################
 #define TFT_INVERT_ROTATION 0
 #define TFT_INVERT_ROTATION1 1
+#define TFT_INVERT_ROTATION2 0   // Adapte M5Stack TFT
+
+// #############################################
+// ### Set to 1 for some displays,           ###
+//     for example IPS                       ###
+// #############################################
+#define TFT_INVERT_COLOR 0
 
 // ################################################
 // ### SET TO 0X00 FOR DISPLAYS WITH RGB MATRIX ###
@@ -300,9 +342,9 @@ typedef struct __attribute__((__packed__)) {
 // ====================================
 static const uint8_t ST7789V_init[] = {
 #if PIN_NUM_RST
-  15,                   					        // 15 commands in list
+  16,                   					        // 15 commands in list
 #else
-  16,                   					        // 16 commands in list
+  17,                   					        // 16 commands in list
   TFT_CMD_SWRESET, TFT_CMD_DELAY,					//  1: Software reset, no args, w/delay
   200,												//     200 ms delay
 #endif
@@ -319,6 +361,11 @@ static const uint8_t ST7789V_init[] = {
   TFT_CMD_GMCTRN1, 14, 0xD0, 0x00, 0x05, 0x0D, 0x0C, 0x06, 0x2D, 0x44, 0x40, 0x0E, 0x1C, 0x18, 0x16, 0x19,
   TFT_MADCTL, 1, (MADCTL_MX | TFT_RGB_BGR),			// Memory Access Control (orientation)
   TFT_CMD_PIXFMT, 1, DISP_COLOR_BITS_24,            // *** INTERFACE PIXEL FORMAT: 0x66 -> 18 bit; 0x55 -> 16 bit
+#if TFT_INVERT_COLOR == 1
+  TFT_INVONN, 0,
+#else
+  TFT_INVOFF, 0,
+#endif
   TFT_CMD_SLPOUT, TFT_CMD_DELAY, 120,				//  Sleep out,	//  120 ms delay
   TFT_DISPON, TFT_CMD_DELAY, 120,
 };
@@ -348,7 +395,11 @@ static const uint8_t ILI9341_init[] = {
   (MADCTL_MX | TFT_RGB_BGR),
   // *** INTERFACE PIXEL FORMAT: 0x66 -> 18 bit; 0x55 -> 16 bit
   TFT_CMD_PIXFMT, 1, DISP_COLOR_BITS_24,
+#if TFT_INVERT_COLOR == 1
+  TFT_INVONN, 0,
+#else
   TFT_INVOFF, 0,
+#endif
   TFT_CMD_FRMCTR1, 2, 0x00, 0x18,
   TFT_CMD_DFUNCTR, 4, 0x08, 0x82, 0x27, 0x00,		// Display Function Control
   TFT_PTLAR, 4, 0x00, 0x00, 0x01, 0x3F,
@@ -533,7 +584,11 @@ static const uint8_t  STP7735R_init[] = {
   0x8A, 0xEE,
   ST7735_VMCTR1 , 1      ,	// 12: Power control, 1 arg, no delay:
   0x0E,
+#if TFT_INVERT_COLOR == 1
+  TFT_INVONN, 0,
+#else
   TFT_INVOFF , 0      ,		// 13: Don't invert display, no args, no delay
+#endif
   TFT_MADCTL , 1      ,		// 14: Memory access control (directions), 1 arg:
   0xC0,						//     row addr/col addr, bottom to top refresh, RGB order
   TFT_CMD_PIXFMT , 1+TFT_CMD_DELAY,	//  15: Set color mode, 1 arg + delay:
