@@ -108,6 +108,8 @@ static const char *REQUEST_FORMAT =
 		"GET /assets/pict/kids-fo/pc/%.2d%.2d.jpg HTTP/1.1\r\n"
 		"Host: " WEB_SERVER "\r\n"
 		"User-Agent: esp-idf/1.0 esp32\r\n"
+		"Accept: image/webp,image/apng,image/*,*/*;q=0.8\r\n"
+		"Referer: http://" WEB_SERVER "/\r\n"
 		"\r\n";
 // ==========================================================
 
@@ -191,7 +193,7 @@ static void http_get_task()
 		// check valid time and minute changed
 		if ((curr_hour >= 0) && (curr_hour < 24) && (curr_minute >= 0) && (curr_minute < 60) && curr_minute != last_show_minute)
 		{
-			char req_buf[128];
+			char req_buf[256];
 
 			int str_len = sprintf(req_buf, REQUEST_FORMAT, curr_hour, curr_minute);
 
