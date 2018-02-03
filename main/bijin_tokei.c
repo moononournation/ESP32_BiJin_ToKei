@@ -60,7 +60,7 @@
 // ==========================================================
 
 #define SPIFFS_BASE_PATH "/spiffs"
-#define TIMEZONE 8 // hour offset
+#define TIMEZONE 8								 // hour offset
 #define CHECK_NTP_INTERVAL 60 * 60 // 1 hour
 
 #if CACHE_COUNT > 0
@@ -102,10 +102,10 @@ const int CONNECTED_BIT = 0x00000001;
 #define WEB_SERVER "www.bijint.com"
 #define WEB_PORT "80"
 static const char *REQUEST_FORMAT =
-		// "GET http://" WEB_SERVER "/assets/toppict/jp/t1/%.2d%.2d.jpg HTTP/1.0\r\n"
-		// "GET http://" WEB_SERVER "/assets/pict/jp/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
-		// "GET http://" WEB_SERVER "/assets/pict/hiroshima/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
-		"GET http://" WEB_SERVER "/assets/pict/kids-fo/pc/%.2d%.2d.jpg HTTP/1.0\r\n"
+		// "GET /assets/toppict/jp/t1/%.2d%.2d.jpg HTTP/1.1\r\n"
+		// "GET /assets/pict/jp/pc/%.2d%.2d.jpg HTTP/1.1\r\n"
+		// "GET /assets/pict/hiroshima/pc/%.2d%.2d.jpg HTTP/1.1\r\n"
+		"GET /assets/pict/kids-fo/pc/%.2d%.2d.jpg HTTP/1.1\r\n"
 		"Host: " WEB_SERVER "\r\n"
 		"User-Agent: esp-idf/1.0 esp32\r\n"
 		"\r\n";
